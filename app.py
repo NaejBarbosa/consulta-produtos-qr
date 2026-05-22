@@ -4,19 +4,27 @@ import pandas as pd
 from io import BytesIO
 import streamlit as st
 from rapidfuzz import process, fuzz
+import unicodedata  # <-- para remover acentos
 
 # ------------------- CONFIGURAÇÃO DA PLANILHA -------------------
 url_edit = "https://docs.google.com/spreadsheets/d/1_1FzkSOXCBESZScXFXIzESkpP9HQu29y8c-huOv_Fz0/edit?usp=drivesdk"
 sheet_id = url_edit.split('/d/')[1].split('/')[0]
 url_csv = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 
-@st.cache_data(ttl=300)  # cache para não recarregar a planilha a cada interação
+def normalizar_texto(texto: str) -> str:
+    """Remove acentos e converte para minúsculas."""
+    texto = str(texto).lower()
+    texto = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('ASCII')
+    return texto
+
+@st.cache_data(ttl=300)
 def load_data():
     df = pd.read_csv(url_csv)
     df.columns = df.columns.str.strip()
     colunas = ['Marca', 'Descrição', 'Apresentação', 'Cód. EAN']
     df = df[colunas].copy()
     df['texto_busca'] = df['Marca'] + " " + df['Descrição'] + " " + df['Apresentação']
+    df['texto_busca_norm'] = df['texto_busca'].apply(normalizar_texto)   # campo normalizado
     return df
 
 df = load_data()
@@ -26,8 +34,10 @@ produtos = df.to_dict('records')
 def buscar_produtos(termo, limite=5):
     if not termo or len(termo) < 2:
         return []
-    textos = df['texto_busca'].tolist()
-    resultados = process.extract(termo, textos, scorer=fuzz.WRatio, limit=limite)
+    termo_norm = normalizar_texto(termo)
+    textos_norm = df['texto_busca_norm'].tolist()
+    # token_set_ratio ignora ordem e exige que as palavras do termo estejam presentes
+    resultados = process.extract(termo_norm, textos_norm, scorer=fuzz.token_set_ratio, limit=limite)
     indices = [r[2] for r in resultados if r[1] >= 40]
     return [produtos[i] for i in indices]
 
