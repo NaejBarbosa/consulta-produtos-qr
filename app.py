@@ -45,7 +45,7 @@ def gerar_qr_code(ean):
 # ------------------- INTERFACE STREAMLIT -------------------
 st.set_page_config(page_title="Consulta de Produtos", page_icon="🔍", layout="centered")
 
-st.markdown("<h2 style='text-align: center;'>🔍 Consulta avançada de produtos</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>🔍 Consultar Produto</h2>", unsafe_allow_html=True)
 
 # Botão de atualização
 col1, col2 = st.columns([4, 1])
