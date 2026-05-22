@@ -10,7 +10,7 @@ url_edit = "https://docs.google.com/spreadsheets/d/1_1FzkSOXCBESZScXFXIzESkpP9HQ
 sheet_id = url_edit.split('/d/')[1].split('/')[0]
 url_csv = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 
-@st.cache_data(ttl=3600)  # cache para não recarregar a planilha a cada interação
+@st.cache_data(ttl=300)  # cache para não recarregar a planilha a cada interação
 def load_data():
     df = pd.read_csv(url_csv)
     df.columns = df.columns.str.strip()
@@ -46,6 +46,13 @@ def gerar_qr_code(ean):
 st.set_page_config(page_title="Consulta de Produtos", page_icon="🔍", layout="centered")
 
 st.markdown("<h2 style='text-align: center;'>🔍 Consulta avançada de produtos</h2>", unsafe_allow_html=True)
+
+# Botão de atualização
+col1, col2 = st.columns([4, 1])
+with col2:
+    if st.button("🔄 Atualizar", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
 
 # Caixa de busca
 termo = st.text_input("Digite marca, descrição ou parte do nome", placeholder="Ex: shampoo dove", key="busca")
